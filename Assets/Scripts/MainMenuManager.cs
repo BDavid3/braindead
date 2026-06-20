@@ -1,30 +1,29 @@
-using System;
 using NUnit.Framework;
-using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections.Generic;
+using TMPro;
 
 public class MainMenuManager : MonoBehaviour
 {
-    private bool _isInProcess;
+    [SerializeField] private Button serverListButton;
     [SerializeField] private Button hostLobbyButton;
     [SerializeField] private Button joinLobbyButton;
     [SerializeField] private Button quitButton;
+    
+    [SerializeField] private GameObject mainMenuPanel;
+    [SerializeField] private GameObject lobbyPanel;
+    [SerializeField] private GameObject serverListPanel;
+    [SerializeField] private GameObject optionsPanel;
+    
+    [SerializeField] private TMP_InputField joinInputField;
+    
+    public TMP_InputField JoinInputField => joinInputField;
+    public GameObject LobbyPanel  => lobbyPanel;
+    
     public static MainMenuManager Instance { get; private set; }
-
-    public bool IsInProcess
-    {
-        get => _isInProcess;
-        set
-        {
-            _isInProcess = value;
-            
-            hostLobbyButton.interactable = !_isInProcess;
-            joinLobbyButton.interactable = !_isInProcess;
-            quitButton.interactable = !_isInProcess;
-        }
-    }
-
+    private List<GameObject> Panels => new List<GameObject> {mainMenuPanel, lobbyPanel, serverListPanel, optionsPanel};
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -33,23 +32,28 @@ public class MainMenuManager : MonoBehaviour
         }
         Instance = this;
     }
-
+    
     private void Start()
     {
-        hostLobbyButton.onClick.AddListener(OnHostLobbyButtonClick);
-        joinLobbyButton.onClick.AddListener(OnJoinLobbyButtonClick);
-        quitButton.onClick.AddListener(OnQuitLobbyButtonClick);
+        StartListening();
     }
+
+    void OnServerListButtonClick()
+    {
+        StopListening();
+        OnlyCurrentPanel(serverListPanel);
+    }
+    
 
     void OnHostLobbyButtonClick()
     {
+        StopListening();
         SteamLobbyManager.Instance.HostLobby();
     }
 
     void OnJoinLobbyButtonClick()
     {
         SteamLobbyManager.Instance.JoinLobby();
-        // show List
     }
 
     void OnQuitLobbyButtonClick()
@@ -63,11 +67,38 @@ public class MainMenuManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Make sure to destroy when changing Scene
-
+        StopListening();
+    }
+    
+    void StopListening()
+    {
+        serverListButton.onClick.RemoveAllListeners();
         hostLobbyButton.onClick.RemoveAllListeners();
         joinLobbyButton.onClick.RemoveAllListeners();
         quitButton.onClick.RemoveAllListeners();
     }
-    
+
+     public void StartListening()
+    {
+        serverListButton.onClick.AddListener(OnServerListButtonClick);
+        hostLobbyButton.onClick.AddListener(OnHostLobbyButtonClick);
+        joinLobbyButton.onClick.AddListener(OnJoinLobbyButtonClick);
+        quitButton.onClick.AddListener(OnQuitLobbyButtonClick);
+    }
+
+    public void OnlyCurrentPanel(GameObject whichNotPanel)
+    {
+        foreach (var item in Panels)
+        {
+            item.SetActive(true);
+        }
+        foreach (var item in Panels)
+        {
+            if  (item != whichNotPanel)
+            {
+                item.SetActive(false);
+            }
+        }
+    }
+
 }

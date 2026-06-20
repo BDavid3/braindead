@@ -48,7 +48,15 @@ public class SteamLobbyManager : MonoBehaviour
     public void JoinLobby()
     {
         _isHost = false;
-        
+        if (MainMenuManager.Instance.JoinInputField != null)
+        {
+            if (MainMenuManager.Instance.JoinInputField.text == _currentLobbyID.ToString())
+            {
+                SteamMatchmaking.JoinLobby(_currentLobbyID);
+                return;
+            }
+        }
+        Debug.LogError("Incorrect lobby code!");
     }
     
     
@@ -82,7 +90,7 @@ public class SteamLobbyManager : MonoBehaviour
         if (result.m_eResult != EResult.k_EResultOK)
         {
             Debug.LogError($"Steam Lobby creation failed: {result.m_eResult}");
-            // Return to Main Menu default state
+            MainMenuManager.Instance.StartListening();
             return;
         }
         
@@ -93,15 +101,15 @@ public class SteamLobbyManager : MonoBehaviour
 
         _fishNetManager.ServerManager.StartConnection();
         _fishNetManager.ClientManager.StartConnection();
-        
-        // After that automatically fires the Other On thingy
     }
 
     void OnJoinRequested(GameLobbyJoinRequested_t result)
     {
         _isHost = false;
+        
         _currentLobbyID = result.m_steamIDLobby;
         SteamMatchmaking.JoinLobby(_currentLobbyID);
+        
         Debug.Log($"Joined lobby: {_currentLobbyID}");
     }
 
@@ -109,16 +117,17 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (_isHost)
         {
-            LoadGameScene();
-            Debug.Log("Entered your lobby.");
+            MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
+            Debug.Log("Entered your own lobby.");
             return;
         }
+        
         CSteamID hostSteamID = SteamMatchmaking.GetLobbyOwner(_currentLobbyID);
-        Debug.Log($"Player joined Host {hostSteamID}");
+        Debug.Log($"Player joined Host: {hostSteamID}, Lobby: {_currentLobbyID}");
         
         SetFishySteamworksTargetId(hostSteamID.m_SteamID.ToString());
         _fishNetManager.ClientManager.StartConnection();
-        LoadGameScene();
+        MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
     }
     
 
@@ -135,10 +144,4 @@ public class SteamLobbyManager : MonoBehaviour
         Debug.LogWarning("Could not find FishySteamworks transport. " +
                          "Ensure it is on the same GameObject as the NetworkManager.");
     }
-    
-    void LoadGameScene()
-    {
-        SceneManager.LoadScene("Lobby");
-    }
-    
 }
