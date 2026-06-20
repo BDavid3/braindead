@@ -10,15 +10,16 @@ using UnityEngine.SceneManagement;
 public class SteamLobbyManager : MonoBehaviour
 {
     private const int MaxPlayers = 8;
-    private CSteamID _currentLobbyID;
+    public CSteamID currentLobbyID;
     
-    private bool _isHost;
+    public bool isHost;
+    public bool isPublic;
+    
     private NetworkManager _fishNetManager;
 
     private Callback<LobbyCreated_t> _onLobbyCreated;
     private Callback<GameLobbyJoinRequested_t> _onJoinRequested;
     private Callback<LobbyEnter_t> _onLobbyEntered;
-    private Callback<LobbyChatUpdate_t> _onLobbyChatUpdate;
     
     public static SteamLobbyManager Instance { get; private set; }
     
@@ -41,18 +42,18 @@ public class SteamLobbyManager : MonoBehaviour
     
     public void HostLobby()
     {
-        _isHost = true;
-        SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePublic, MaxPlayers); // Send it to Steam
+        isHost = true;
+        SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePrivate, MaxPlayers); // Send it to Steam
     }
 
     public void JoinLobby()
     {
-        _isHost = false;
+        isHost = false;
         if (MainMenuManager.Instance.JoinInputField != null)
         {
-            if (MainMenuManager.Instance.JoinInputField.text == _currentLobbyID.ToString())
+            if (MainMenuManager.Instance.JoinInputField.text == currentLobbyID.ToString())
             {
-                SteamMatchmaking.JoinLobby(_currentLobbyID);
+                SteamMatchmaking.JoinLobby(currentLobbyID);
                 return;
             }
         }
@@ -77,10 +78,10 @@ public class SteamLobbyManager : MonoBehaviour
 
     void LeaveLobby()
     {
-        if (_currentLobbyID.IsValid())
+        if (currentLobbyID.IsValid())
         {
-            SteamMatchmaking.LeaveLobby(_currentLobbyID);
-            _currentLobbyID = CSteamID.Nil;
+            SteamMatchmaking.LeaveLobby(currentLobbyID);
+            currentLobbyID = CSteamID.Nil;
         }
     }
     
@@ -90,14 +91,14 @@ public class SteamLobbyManager : MonoBehaviour
         if (result.m_eResult != EResult.k_EResultOK)
         {
             Debug.LogError($"Steam Lobby creation failed: {result.m_eResult}");
-            MainMenuManager.Instance.StartListening();
+            MainMenuManager.Instance.DefaultMainMenuState();
             return;
         }
         
-        _currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
+        currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
 
-        SteamMatchmaking.SetLobbyData(_currentLobbyID,"Lobby","InLobby");
-        Debug.Log($"Lobby created: {_currentLobbyID}");
+        SteamMatchmaking.SetLobbyData(currentLobbyID,"Lobby","InLobby");
+        Debug.Log($"Lobby created: {currentLobbyID}");
 
         _fishNetManager.ServerManager.StartConnection();
         _fishNetManager.ClientManager.StartConnection();
@@ -105,33 +106,55 @@ public class SteamLobbyManager : MonoBehaviour
 
     void OnJoinRequested(GameLobbyJoinRequested_t result)
     {
-        _isHost = false;
+        isHost = false;
         
-        _currentLobbyID = result.m_steamIDLobby;
-        SteamMatchmaking.JoinLobby(_currentLobbyID);
+        currentLobbyID = result.m_steamIDLobby;
+        SteamMatchmaking.JoinLobby(currentLobbyID);
         
-        Debug.Log($"Joined lobby: {_currentLobbyID}");
+        Debug.Log($"Joined lobby: {currentLobbyID}");
     }
 
     void OnLobbyEntered(LobbyEnter_t result)
     {
-        if (_isHost)
+        if (isHost)
         {
+            // Only restrict if successful creation
             MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
+            MainMenuManager.Instance.OnlyChosenButtonListen(MainMenuManager.Instance.ExitLobbyButton,
+                MainMenuManager.Instance.PrivacyButton,
+                MainMenuManager.Instance.ReadyUpButton,
+                MainMenuManager.Instance.StartGameButton
+            );
             Debug.Log("Entered your own lobby.");
             return;
         }
         
-        CSteamID hostSteamID = SteamMatchmaking.GetLobbyOwner(_currentLobbyID);
-        Debug.Log($"Player joined Host: {hostSteamID}, Lobby: {_currentLobbyID}");
+        CSteamID hostSteamID = SteamMatchmaking.GetLobbyOwner(currentLobbyID);
+        Debug.Log($"Player joined Host: {hostSteamID}, Lobby: {currentLobbyID}");
         
         SetFishySteamworksTargetId(hostSteamID.m_SteamID.ToString());
         _fishNetManager.ClientManager.StartConnection();
         MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
+        MainMenuManager.Instance.OnlyChosenButtonListen(MainMenuManager.Instance.ExitLobbyButton,
+            MainMenuManager.Instance.ReadyUpButton);
     }
-    
 
-    private void SetFishySteamworksTargetId(string steamId)
+    public void OnLobbyLeave()
+    {
+        SteamMatchmaking.LeaveLobby(currentLobbyID);
+        currentLobbyID = CSteamID.Nil;
+
+        if (isHost)
+        {
+            _fishNetManager.ServerManager.StopConnection(true);
+        }
+        _fishNetManager.ClientManager.StopConnection();
+        isHost = false;
+        
+        MainMenuManager.Instance.DefaultMainMenuState();
+    }
+
+    void SetFishySteamworksTargetId(string steamId)
     {
         var transport = _fishNetManager.GetComponent<FishySteamworks.FishySteamworks>();
         
@@ -143,5 +166,10 @@ public class SteamLobbyManager : MonoBehaviour
         
         Debug.LogWarning("Could not find FishySteamworks transport. " +
                          "Ensure it is on the same GameObject as the NetworkManager.");
+    }
+
+    private void OnApplicationQuit()
+    {
+        OnLobbyLeave();
     }
 }
