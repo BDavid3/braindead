@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using Steamworks;
-using UnityEngine;
 
 // Local LobbyData
 public class LobbyData

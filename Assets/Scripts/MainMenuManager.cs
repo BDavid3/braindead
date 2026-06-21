@@ -1,16 +1,18 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections.Generic;
-using Steamworks;
-using TMPro;
-using System.Linq;
 using UnityEngine.Events;
+using System;
 
 public class MainMenuManager : MonoBehaviour
 {
     public static MainMenuManager Instance { get; private set; }
 
-    private enum MenuState
+    public static Action OnHostLobbyRequested;
+    public static Action<string> OnJoinLobbyRequested;
+    public static Action OnExitLobbyRequested;
+    
+    public enum MenuState
     {
         MainMenu,
         ServerList,
@@ -53,7 +55,7 @@ public class MainMenuManager : MonoBehaviour
         };
     }
 
-    void ShowCurrentPanel(MenuState state)
+    public void ShowCurrentPanel(MenuState state)
     {
         foreach (var kvp in _panelsAndState)
         {
@@ -76,34 +78,26 @@ public class MainMenuManager : MonoBehaviour
             button.onClick.RemoveAllListeners();
         }
     }
-
-    void CheckIfButtonActive()
-    {
-        foreach (var (button,action) in _buttonsWithActions)
-        {
-            if (!button.enabled)
-            {
-                button.onClick.RemoveListener(action);
-            }
-        }
-    }
-
+    
     void OnServerListButtonClick()
     {
         ShowCurrentPanel(MenuState.ServerList);
-        CheckIfButtonActive();
     }
 
     void OnHostLobbyButtonClick()
     {
         ShowCurrentPanel(MenuState.Lobby);
-        CheckIfButtonActive();
+        OnHostLobbyRequested?.Invoke();
     }
 
     void OnJoinLobbyButtonClick()
     {
         ShowCurrentPanel(MenuState.Lobby);
-        CheckIfButtonActive();
+        if (menu.joinInputField != null && !string.IsNullOrEmpty(menu.joinInputField.text))
+        {
+            OnJoinLobbyRequested?.Invoke(menu.joinInputField.text);    
+        }
+        Debug.LogError("Input field empty!");
     }
 
     void OnQuitLobbyButtonClick()
@@ -114,13 +108,12 @@ public class MainMenuManager : MonoBehaviour
     void OnExitLobbyButtonClick()
     {
         ShowCurrentPanel(MenuState.MainMenu);
-        CheckIfButtonActive();
+        OnExitLobbyRequested?.Invoke();
     }
     
     void OnBackButtonClick()
     {
         ShowCurrentPanel(MenuState.MainMenu);
-        CheckIfButtonActive();
     }
 
     void OnPrivacyButtonClick() { }

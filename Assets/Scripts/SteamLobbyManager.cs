@@ -1,28 +1,22 @@
-using System;
-using System.Collections;
-using FishNet;
 using FishNet.Managing;
 using Steamworks;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 [RequireComponent(typeof(SteamworksInitializer))]
 public class SteamLobbyManager : MonoBehaviour
 {
-    private const int MaxPlayers = 8;
-    public CSteamID currentLobbyID;
+    public LobbyPlayerData LobbyPlayerData;
+    public LobbyData LobbyData;
     
-    public bool isHost;
-    public bool isPublic;
-    
-    private NetworkManager _fishNetManager;
-
     private Callback<LobbyCreated_t> _onLobbyCreated;
     private Callback<GameLobbyJoinRequested_t> _onJoinRequested;
     private Callback<LobbyEnter_t> _onLobbyEntered;
+
+    private const int MaxPlayers = 8;
     
+    [SerializeField] private NetworkManager fishNetNetworkManager;
     public static SteamLobbyManager Instance { get; private set; }
-    
+
 
     private void Awake()
     {
@@ -31,145 +25,123 @@ public class SteamLobbyManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-        Instance = this;
-        
-        if (_fishNetManager == null)
-        {
-            _fishNetManager = FindFirstObjectByType<NetworkManager>();
-        }
-        
-    }
-    
-    public void HostLobby()
-    {
-        isHost = true;
-        SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePrivate, MaxPlayers); // Send it to Steam
-    }
 
-    public void JoinLobby()
-    {
-        isHost = false;
-        if (MainMenuManager.Instance.JoinInputField != null)
-        {
-            if (MainMenuManager.Instance.JoinInputField.text == currentLobbyID.ToString())
-            {
-                SteamMatchmaking.JoinLobby(currentLobbyID);
-                return;
-            }
-        }
-        Debug.LogError("Incorrect lobby code!");
+        Instance = this;
     }
-    
     
     private void OnEnable()
     {
         _onLobbyCreated = Callback<LobbyCreated_t>.Create(OnLobbyCreated);
         _onJoinRequested = Callback<GameLobbyJoinRequested_t>.Create(OnJoinRequested);
         _onLobbyEntered = Callback<LobbyEnter_t>.Create(OnLobbyEntered);
+
+        MainMenuManager.OnHostLobbyRequested += HostLobby;
+        MainMenuManager.OnJoinLobbyRequested += JoinLobby;
+        MainMenuManager.OnExitLobbyRequested += LeaveLobby;
     }
 
     private void OnDisable()
     {
-        _onLobbyCreated?.Dispose();
-        _onJoinRequested?.Dispose();
-        _onLobbyEntered?.Dispose();
-    }
-
-
-    void LeaveLobby()
-    {
-        if (currentLobbyID.IsValid())
-        {
-            SteamMatchmaking.LeaveLobby(currentLobbyID);
-            currentLobbyID = CSteamID.Nil;
-        }
+        _onLobbyCreated.Dispose();
+        _onJoinRequested.Dispose();
+        _onLobbyEntered.Dispose();
+        
+        MainMenuManager.OnHostLobbyRequested -= HostLobby;
+        MainMenuManager.OnJoinLobbyRequested -= JoinLobby;
+        MainMenuManager.OnExitLobbyRequested -= LeaveLobby;
     }
     
+    void HostLobby()
+    {
+        LobbyPlayerData.IsHost = true;
+        SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePrivate, MaxPlayers);
+    }
 
+    void JoinLobby(string lobbyID)
+    {
+        LobbyPlayerData.IsHost = false;
+        if (LobbyData.LobbyID.ToString() == lobbyID)
+        {
+            SteamMatchmaking.JoinLobby(LobbyData.LobbyID);
+        }
+        Debug.LogError("Incorrect lobby code!");
+    }
+    
+    void LeaveLobby()
+    {
+        if (LobbyData.LobbyID.IsValid())
+        {
+            SteamMatchmaking.LeaveLobby(LobbyData.LobbyID);
+            LobbyData.LobbyID = CSteamID.Nil;
+        }
+        
+        if (LobbyPlayerData.IsHost)
+        {
+            fishNetNetworkManager.ServerManager.StopConnection(true);
+        }
+        fishNetNetworkManager.ClientManager.StopConnection();
+        LobbyPlayerData.IsHost = false;
+        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu);
+    }
+    
+    void OnJoinRequested(GameLobbyJoinRequested_t result)
+    {
+        LobbyPlayerData.IsHost = false;
+        LobbyData.LobbyID = result.m_steamIDLobby;
+        SteamMatchmaking.JoinLobby(LobbyData.LobbyID);
+        
+        Debug.Log($"Joined lobby: {LobbyData.LobbyID}");
+    }
+    
+    
     void OnLobbyCreated(LobbyCreated_t result)
     {
         if (result.m_eResult != EResult.k_EResultOK)
         {
             Debug.LogError($"Steam Lobby creation failed: {result.m_eResult}");
-            MainMenuManager.Instance.DefaultMainMenuState();
             return;
         }
         
-        currentLobbyID = new CSteamID(result.m_ulSteamIDLobby);
+        LobbyData.LobbyID = new CSteamID(result.m_ulSteamIDLobby);
 
-        SteamMatchmaking.SetLobbyData(currentLobbyID,"Lobby","InLobby");
-        Debug.Log($"Lobby created: {currentLobbyID}");
+        SteamMatchmaking.SetLobbyData(LobbyData.LobbyID,"Lobby","InLobby");
+        Debug.Log($"Lobby created: {LobbyData.LobbyID}");
 
-        _fishNetManager.ServerManager.StartConnection();
-        _fishNetManager.ClientManager.StartConnection();
+        fishNetNetworkManager.ServerManager.StartConnection();
+        fishNetNetworkManager.ClientManager.StartConnection();
     }
-
-    void OnJoinRequested(GameLobbyJoinRequested_t result)
-    {
-        isHost = false;
-        
-        currentLobbyID = result.m_steamIDLobby;
-        SteamMatchmaking.JoinLobby(currentLobbyID);
-        
-        Debug.Log($"Joined lobby: {currentLobbyID}");
-    }
-
+    
     void OnLobbyEntered(LobbyEnter_t result)
     {
-        if (isHost)
+        if (LobbyPlayerData.IsHost)
         {
-            // Only restrict if successful creation
-            MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
-            MainMenuManager.Instance.OnlyChosenButtonListen(MainMenuManager.Instance.ExitLobbyButton,
-                MainMenuManager.Instance.PrivacyButton,
-                MainMenuManager.Instance.ReadyUpButton,
-                MainMenuManager.Instance.StartGameButton
-            );
+            MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu);
             Debug.Log("Entered your own lobby.");
             return;
         }
         
-        CSteamID hostSteamID = SteamMatchmaking.GetLobbyOwner(currentLobbyID);
-        Debug.Log($"Player joined Host: {hostSteamID}, Lobby: {currentLobbyID}");
+        LobbyPlayerData.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.LobbyID); 
+        SetFishySteamworksTargetId(LobbyPlayerData.HostSteamID.m_SteamID.ToString());
+        fishNetNetworkManager.ClientManager.StartConnection();
         
-        SetFishySteamworksTargetId(hostSteamID.m_SteamID.ToString());
-        _fishNetManager.ClientManager.StartConnection();
-        MainMenuManager.Instance.OnlyCurrentPanel(MainMenuManager.Instance.LobbyPanel);
-        MainMenuManager.Instance.OnlyChosenButtonListen(MainMenuManager.Instance.ExitLobbyButton,
-            MainMenuManager.Instance.ReadyUpButton);
+        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.Lobby);
+        Debug.Log($"Player joined Host: {LobbyPlayerData.HostSteamID}, Lobby: {LobbyData.LobbyID}");
     }
-
-    public void OnLobbyLeave()
+    
+    void SetFishySteamworksTargetId(string hostSteamID)
     {
-        SteamMatchmaking.LeaveLobby(currentLobbyID);
-        currentLobbyID = CSteamID.Nil;
-
-        if (isHost)
-        {
-            _fishNetManager.ServerManager.StopConnection(true);
-        }
-        _fishNetManager.ClientManager.StopConnection();
-        isHost = false;
-        
-        MainMenuManager.Instance.DefaultMainMenuState();
-    }
-
-    void SetFishySteamworksTargetId(string steamId)
-    {
-        var transport = _fishNetManager.GetComponent<FishySteamworks.FishySteamworks>();
+        var transport = fishNetNetworkManager.GetComponent<FishySteamworks.FishySteamworks>();
         
         if (transport != null)
         {
-            transport.SetClientAddress(steamId);
+            transport.SetClientAddress(hostSteamID);
             return;
         }
-        
-        Debug.LogWarning("Could not find FishySteamworks transport. " +
-                         "Ensure it is on the same GameObject as the NetworkManager.");
+        Debug.LogError("Could not find FishySteamworks transport. " + "Ensure it is on the same GameObject as the NetworkManager.");
     }
 
     private void OnApplicationQuit()
     {
-        OnLobbyLeave();
+        LeaveLobby();
     }
 }

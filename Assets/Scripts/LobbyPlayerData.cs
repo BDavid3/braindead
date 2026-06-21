@@ -1,10 +1,10 @@
 using Steamworks;
-using UnityEngine;
 
 // Local PlayerData
 public class LobbyPlayerData
 {
     public CSteamID PlayerSteamID;
+    public CSteamID HostSteamID;
     public string PlayerNickName;
     public bool IsReady;
     public bool IsHost;
