@@ -4,185 +4,138 @@ using System.Collections.Generic;
 using Steamworks;
 using TMPro;
 using System.Linq;
+using UnityEngine.Events;
 
 public class MainMenuManager : MonoBehaviour
 {
-    [SerializeField] private Button serverListButton;
-    [SerializeField] private Button hostLobbyButton;
-    [SerializeField] private Button joinLobbyButton;
-    [SerializeField] private Button quitButton;
-    
-    [SerializeField] private Button privacyButton;
-    [SerializeField] private Button exitLobbyButton;
-    [SerializeField] private Button backButton;
-    [SerializeField] private Button readyUpButton;
-    [SerializeField] private Button startGameButton;
-    
-    [SerializeField] private GameObject mainMenuPanel;
-    [SerializeField] private GameObject lobbyPanel;
-    [SerializeField] private GameObject serverListPanel;
-    
-    [SerializeField] private TMP_InputField joinInputField;
-    
-    public TMP_InputField JoinInputField => joinInputField;
-    private TMP_Text ReadyButtonText => readyUpButton.GetComponentInChildren<TMP_Text>();
-    
-    public GameObject LobbyPanel  => lobbyPanel;
-    
-    public Button ServerListButton => serverListButton;
-    public Button HostLobbyButton => hostLobbyButton;
-    public Button JoinLobbyButton => joinLobbyButton;
-    public Button QuitLobbyButton => quitButton;
-    public Button PrivacyButton => privacyButton;
-    public Button ExitLobbyButton => exitLobbyButton;
-    public Button BackButton => backButton;
-    public  Button ReadyUpButton => readyUpButton;
-    public  Button StartGameButton => startGameButton;
-
-    public bool isReady;
-    
     public static MainMenuManager Instance { get; private set; }
-    private List<GameObject> Panels => new List<GameObject> {mainMenuPanel, lobbyPanel, serverListPanel};
-    private List<Button> Buttons => new List<Button> { serverListButton, hostLobbyButton, joinLobbyButton, quitButton , privacyButton , exitLobbyButton , backButton, startGameButton, readyUpButton };
-    
+
+    private enum MenuState
+    {
+        MainMenu,
+        ServerList,
+        Lobby
+    }
+
+    private Dictionary<MenuState, GameObject> _panelsAndState;
+    private (Button button, UnityAction action)[] _buttonsWithActions;
+
+    [SerializeField] private MainMenuObjects menu;
+
     private void Awake()
     {
         if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
         }
+
         Instance = this;
+
+        _panelsAndState = new Dictionary<MenuState, GameObject>
+        {
+            { MenuState.MainMenu, menu.mainMenuPanel },
+            { MenuState.ServerList, menu.serverListPanel },
+            { MenuState.Lobby, menu.lobbyPanel }
+        };
+
+        _buttonsWithActions = new (Button, UnityAction)[]
+        {
+            (menu.serverListButton, OnServerListButtonClick),
+            (menu.hostLobbyButton, OnHostLobbyButtonClick),
+            (menu.joinLobbyButton, OnJoinLobbyButtonClick),
+            (menu.quitButton, OnQuitLobbyButtonClick),
+
+            (menu.exitLobbyButton, OnExitLobbyButtonClick),
+            (menu.privacyButton, OnPrivacyButtonClick),
+            (menu.backButton, OnBackButtonClick),
+            (menu.startGameButton, OnStartGameButtonClick),
+            (menu.readyUpButton, OnReadyUpButtonClick)
+        };
     }
-    
-    public void OnEnable()
+
+    void ShowCurrentPanel(MenuState state)
     {
-        serverListButton.onClick.AddListener(OnServerListButtonClick);
-        hostLobbyButton.onClick.AddListener(OnHostLobbyButtonClick);
-        joinLobbyButton.onClick.AddListener(OnJoinLobbyButtonClick);
-        quitButton.onClick.AddListener(OnQuitLobbyButtonClick);
-        
-        exitLobbyButton.onClick.AddListener(OnExitLobbyButtonClick);
-        privacyButton.onClick.AddListener(OnPrivacyButtonClick);
-        backButton.onClick.AddListener(DefaultMainMenuState);
-        startGameButton.onClick.AddListener(OnStartGameButtonClick);
-        readyUpButton.onClick.AddListener(OnReadyUpButtonClick);
-        
+        foreach (var kvp in _panelsAndState)
+        {
+            kvp.Value.SetActive(kvp.Key == state);
+        }
     }
-    private void OnDestroy()
+
+    void OnEnable()
     {
-        StopListeningGoTrough();
+        foreach (var (button, action) in _buttonsWithActions)
+        {
+            button.onClick.AddListener(action);
+        }
     }
-    
-    
+
+    void OnDisable()
+    {
+        foreach (var (button, action) in _buttonsWithActions)
+        {
+            button.onClick.RemoveAllListeners();
+        }
+    }
+
+    void CheckIfButtonActive()
+    {
+        foreach (var (button,action) in _buttonsWithActions)
+        {
+            if (!button.enabled)
+            {
+                button.onClick.RemoveListener(action);
+            }
+        }
+    }
+
     void OnServerListButtonClick()
     {
-        StopListeningGoTrough();
-        OnlyCurrentPanel(serverListPanel);
+        ShowCurrentPanel(MenuState.ServerList);
+        CheckIfButtonActive();
     }
 
     void OnHostLobbyButtonClick()
     {
-        StopListeningGoTrough();
-        SteamLobbyManager.Instance.HostLobby();
+        ShowCurrentPanel(MenuState.Lobby);
+        CheckIfButtonActive();
     }
 
     void OnJoinLobbyButtonClick()
     {
-        StopListeningGoTrough();
-        SteamLobbyManager.Instance.JoinLobby();
+        ShowCurrentPanel(MenuState.Lobby);
+        CheckIfButtonActive();
     }
 
     void OnQuitLobbyButtonClick()
     {
-        StopListeningGoTrough();
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#else
-        Application.Quit();
-#endif
+        Quit();
     }
 
     void OnExitLobbyButtonClick()
     {
-        SteamLobbyManager.Instance.OnLobbyLeave();
-    }
-
-    void OnPrivacyButtonClick()
-    {
-        if (!SteamLobbyManager.Instance.isHost)
-        {
-            Debug.Log("You are not the host!");
-            return;
-        }
-
-        if (SteamLobbyManager.Instance.isPublic)
-        {
-            SteamMatchmaking.SetLobbyType(SteamLobbyManager.Instance.currentLobbyID, ELobbyType.k_ELobbyTypePrivate);
-            return;
-        }
-        
-        SteamMatchmaking.SetLobbyType(SteamLobbyManager.Instance.currentLobbyID, ELobbyType.k_ELobbyTypePublic);
-        SteamLobbyManager.Instance.isPublic = true;
-
-    }
-
-    void OnStartGameButtonClick()
-    {
-        // check if host && if everyone is ready
-    }   
-
-    void OnReadyUpButtonClick()
-    {
-        if (isReady)
-        {
-            isReady = false;
-            ReadyButtonText.text = "READY UP";
-        }
-        isReady = true;
-        ReadyButtonText.text = "READY";
-    }
-
-
-    public void DefaultMainMenuState()
-    {
-        OnEnable();
-        OnlyCurrentPanel(mainMenuPanel);
+        ShowCurrentPanel(MenuState.MainMenu);
+        CheckIfButtonActive();
     }
     
-    void StopListeningGoTrough()
+    void OnBackButtonClick()
     {
-        foreach (var item in Buttons)
-        {
-            item.onClick.RemoveAllListeners();
-        }
-    }
-    
-    public void OnlyCurrentPanel(GameObject panelToShow)
-    {
-        foreach (var item in Panels)
-        {
-            item.SetActive(true);
-        }
-        
-        foreach (var item in Panels)
-        {
-            if  (item != panelToShow)
-            {
-                item.SetActive(false);
-            }
-        }
+        ShowCurrentPanel(MenuState.MainMenu);
+        CheckIfButtonActive();
     }
 
-    public void OnlyChosenButtonListen(params Button[] buttons)
-    {
-        foreach (var item in Buttons)
-        {
-            if (!buttons.Contains(item))
-            {
-                item.onClick.RemoveAllListeners();
-                // item.gameObject.SetActive(false); -> risky
-            }
-        }
-    }
+    void OnPrivacyButtonClick() { }
     
+    void OnStartGameButtonClick() { }
+
+    void OnReadyUpButtonClick() { }
+
+    void Quit()
+    {
+        #if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+        #else
+        Application.Quit();
+        #endif
+    }
+
 }
