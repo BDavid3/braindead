@@ -8,10 +8,7 @@ public class LobbyPlayerCard : NetworkBehaviour
 {
     [SerializeField] private GameObject lobbyPlayerPrefab;
     public static LobbyPlayerCard Instance { get; private set; }
-
-    LobbyPlayerData _lobbyPlayerData;
-    MainMenuObjects _mainMenuObjects;
-
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -24,7 +21,7 @@ public class LobbyPlayerCard : NetworkBehaviour
 
     void SetupName()
     {
-        _lobbyPlayerData.PlayerNickName = SteamFriends.GetFriendPersonaName(_lobbyPlayerData.PlayerSteamID);
+        LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.PlayerSteamID);
     }
 
     public void SetupPlayerCard()
@@ -42,8 +39,8 @@ public class LobbyPlayerCard : NetworkBehaviour
     [ObserversRpc]
     void SyncCreatedPlayerCard()
     {
-        GameObject lobbyPlayer = Instantiate(lobbyPlayerPrefab, _mainMenuObjects.lobbyPlayerPlace.transform);
-        lobbyPlayer.name = SteamFriends.GetFriendPersonaName(_lobbyPlayerData.PlayerSteamID);
+        GameObject lobbyPlayer = Instantiate(lobbyPlayerPrefab, MainMenuObjects.Instance.lobbyPlayerPlace.transform);
+        lobbyPlayer.name = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.PlayerSteamID);
         lobbyPlayer.GetComponent<LobbyPlayerCard>().SetupName();
     }
 

@@ -5,9 +5,6 @@ using UnityEngine;
 [RequireComponent(typeof(SteamworksInitializer))]
 public class SteamLobbyManager : MonoBehaviour
 {
-    public LobbyPlayerData LobbyPlayerData;
-    public LobbyData LobbyData;
-    
     private Callback<LobbyCreated_t> _onLobbyCreated;
     private Callback<GameLobbyJoinRequested_t> _onJoinRequested;
     private Callback<LobbyEnter_t> _onLobbyEntered;
@@ -53,44 +50,44 @@ public class SteamLobbyManager : MonoBehaviour
     
     void HostLobby()
     {
-        LobbyPlayerData.IsHost = true;
+        LobbyPlayerData.Instance.IsHost = true;
         SteamMatchmaking.CreateLobby(ELobbyType.k_ELobbyTypePrivate, MaxPlayers);
     }
 
     void JoinLobby(string lobbyID)
     {
-        LobbyPlayerData.IsHost = false;
-        if (LobbyData.LobbyID.ToString() == lobbyID)
+        LobbyPlayerData.Instance.IsHost = false;
+        if (LobbyData.Instance.LobbyID.ToString() == lobbyID)
         {
-            SteamMatchmaking.JoinLobby(LobbyData.LobbyID);
+            SteamMatchmaking.JoinLobby(LobbyData.Instance.LobbyID);
         }
         Debug.LogError("Incorrect lobby code!");
     }
     
     void LeaveLobby()
     {
-        if (LobbyData.LobbyID.IsValid())
+        if (LobbyData.Instance.LobbyID.IsValid())
         {
-            SteamMatchmaking.LeaveLobby(LobbyData.LobbyID);
-            LobbyData.LobbyID = CSteamID.Nil;
+            SteamMatchmaking.LeaveLobby(LobbyData.Instance.LobbyID);
+            LobbyData.Instance.LobbyID = CSteamID.Nil;
         }
         
-        if (LobbyPlayerData.IsHost)
+        if (LobbyPlayerData.Instance.IsHost)
         {
             fishNetNetworkManager.ServerManager.StopConnection(true);
         }
         fishNetNetworkManager.ClientManager.StopConnection();
-        LobbyPlayerData.IsHost = false;
+        LobbyPlayerData.Instance.IsHost = false;
         MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu, false);
     }
 
     void OnJoinRequested(GameLobbyJoinRequested_t result)
     {
-        LobbyPlayerData.IsHost = false;
-        LobbyData.LobbyID = result.m_steamIDLobby;
-        SteamMatchmaking.JoinLobby(LobbyData.LobbyID);
+        LobbyPlayerData.Instance.IsHost = false;
+        LobbyData.Instance.LobbyID = result.m_steamIDLobby;
+        SteamMatchmaking.JoinLobby(LobbyData.Instance.LobbyID);
         
-        Debug.Log($"Joined lobby: {LobbyData.LobbyID}");
+        Debug.Log($"Joined lobby: {LobbyData.Instance.LobbyID}");
     }
     
     
@@ -102,10 +99,10 @@ public class SteamLobbyManager : MonoBehaviour
             return;
         }
         
-        LobbyData.LobbyID = new CSteamID(result.m_ulSteamIDLobby);
+        LobbyData.Instance.LobbyID = new CSteamID(result.m_ulSteamIDLobby);
 
-        SteamMatchmaking.SetLobbyData(LobbyData.LobbyID,"Lobby","InLobby");
-        Debug.Log($"Lobby created: {LobbyData.LobbyID}");
+        SteamMatchmaking.SetLobbyData(LobbyData.Instance.LobbyID,"Lobby","InLobby");
+        Debug.Log($"Lobby created: {LobbyData.Instance.LobbyID}");
 
         fishNetNetworkManager.ServerManager.StartConnection();
         fishNetNetworkManager.ClientManager.StartConnection();
@@ -113,12 +110,12 @@ public class SteamLobbyManager : MonoBehaviour
     
     void OnLobbyEntered(LobbyEnter_t result)
     {
-        if (LobbyPlayerData.IsHost)
+        if (LobbyPlayerData.Instance.IsHost)
         {
-            LobbyPlayerData.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.LobbyID);
-            LobbyPlayerData.PlayerSteamID = LobbyPlayerData.HostSteamID;
-            LobbyPlayerData.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.HostSteamID);
-            LobbyData.IsPublic = false;
+            LobbyPlayerData.Instance.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID);
+            LobbyPlayerData.Instance.PlayerSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID);
+            LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.HostSteamID);
+            LobbyData.Instance.IsPublic = false;
             
             MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu, true);
             LobbyPlayerCard.Instance.SetupPlayerCard();
@@ -127,18 +124,18 @@ public class SteamLobbyManager : MonoBehaviour
             return;
         }
         
-        LobbyPlayerData.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.LobbyID); 
-        LobbyPlayerData.PlayerSteamID = SteamUser.GetSteamID();
-        LobbyPlayerData.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.PlayerSteamID);
+        LobbyPlayerData.Instance.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID); 
+        LobbyPlayerData.Instance.PlayerSteamID = SteamUser.GetSteamID();
+        LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.PlayerSteamID);
         
-        SetFishySteamworksTargetId(LobbyPlayerData.HostSteamID.m_SteamID.ToString());
+        SetFishySteamworksTargetId(LobbyPlayerData.Instance.HostSteamID.m_SteamID.ToString());
         fishNetNetworkManager.ClientManager.StartConnection();
         
         MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.Lobby, false);
         LobbyPlayerCard.Instance.SetupPlayerCard();
-        Debug.Log($"Player joined Host: {LobbyPlayerData.HostSteamID}, Lobby: {LobbyData.LobbyID}");
+        Debug.Log($"Player joined Host: {LobbyPlayerData.Instance.HostSteamID}, Lobby: {LobbyData.Instance.LobbyID}");
     }
-    
+        
     void SetFishySteamworksTargetId(string hostSteamID)
     {
         var transport = fishNetNetworkManager.GetComponent<FishySteamworks.FishySteamworks>();

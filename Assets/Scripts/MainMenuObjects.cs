@@ -5,6 +5,8 @@ using UnityEngine.UI;
 [System.Serializable]
 public class MainMenuObjects
 {
+    public static MainMenuObjects Instance { get; set; }
+
     [Header("Buttons")]
     public Button serverListButton;
     public Button hostLobbyButton;
@@ -23,7 +25,7 @@ public class MainMenuObjects
     public GameObject serverListPanel;
     
     [Header("InputFields")]
-    public InputField joinInputField;
+    public TMP_InputField joinInputField;
 
     [Header("Texts")]
     public TMP_Text privacyButtonText;
