@@ -57,9 +57,10 @@ public class SteamLobbyManager : MonoBehaviour
     void JoinLobby(string lobbyID)
     {
         LobbyPlayerData.Instance.IsHost = false;
-        if (LobbyData.Instance.LobbyID.ToString() == lobbyID)
+        if (ulong.TryParse(lobbyID, out ulong id))
         {
-            SteamMatchmaking.JoinLobby(LobbyData.Instance.LobbyID);
+            SteamMatchmaking.JoinLobby(new CSteamID(id));
+            return;
         }
         Debug.LogError("Incorrect lobby code!");
     }

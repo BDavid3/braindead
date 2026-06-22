@@ -99,11 +99,13 @@ public class MainMenuManager : MonoBehaviour
     void OnJoinLobbyButtonClick()
     {
         ShowCurrentPanel(MenuState.Lobby, false);
-        if (menu.joinInputField != null && !string.IsNullOrEmpty(menu.joinInputField.text))
+        if (menu.joinInputField == null || string.IsNullOrEmpty(menu.joinInputField.text))
         {
-            OnJoinLobbyRequested?.Invoke(menu.joinInputField.text);    
+            Debug.LogError("Input field empty!");
+            return;
         }
-        Debug.LogError("Input field empty!");
+        ShowCurrentPanel(MenuState.Lobby, true);
+        OnJoinLobbyRequested?.Invoke(menu.joinInputField.text);   
     }
 
     void OnQuitLobbyButtonClick()

@@ -2295,22 +2295,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4e23f3ed887cd94cb180631fd8bf7d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
-  menu:
-    serverListButton: {fileID: 559712061}
-    hostLobbyButton: {fileID: 1476030066}
-    joinLobbyButton: {fileID: 1712678221}
-    quitButton: {fileID: 945669534}
-    privacyButton: {fileID: 329543875}
-    exitLobbyButton: {fileID: 31838566}
-    backButton: {fileID: 1782704000}
-    readyUpButton: {fileID: 1027414515}
-    startGameButton: {fileID: 1302968278}
-    mainMenuPanel: {fileID: 1202888890}
-    lobbyPanel: {fileID: 458295394}
-    serverListPanel: {fileID: 797941329}
-    joinInputField: {fileID: 1017214647}
-    privacyButtonText: {fileID: 2131521275}
-    lobbyPlayerPlace: {fileID: 671440266}
+  menu: {fileID: 0}
 --- !u!1 &971469460
 GameObject:
   m_ObjectHideFlags: 0

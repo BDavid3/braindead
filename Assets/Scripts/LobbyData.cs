@@ -4,7 +4,7 @@ using Steamworks;
 // Local LobbyData
 public class LobbyData
 {
-    public static LobbyData Instance { get; set; }
+    public static LobbyData Instance { get; set; } =  new LobbyData();
     
     public CSteamID LobbyID;
     public bool IsPublic;

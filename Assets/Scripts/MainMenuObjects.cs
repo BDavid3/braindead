@@ -1,11 +1,23 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 [System.Serializable]
-public class MainMenuObjects
+public class MainMenuObjects : MonoBehaviour
 {
     public static MainMenuObjects Instance { get; set; }
+
+    private void Awake()
+    {
+        if (Instance != null && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+    }
 
     [Header("Buttons")]
     public Button serverListButton;

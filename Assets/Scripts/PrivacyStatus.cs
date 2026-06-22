@@ -6,10 +6,6 @@ using UnityEngine;
 
 public class PrivacyStatus : NetworkBehaviour
 {
-    LobbyData _lobbyData;
-    LobbyPlayerData _lobbyPlayerData;
-    MainMenuObjects _mainMenuObjects;
-
     void OnEnable()
     {
         MainMenuManager.OnPrivacyButtonRequested += PrivacyButton;
@@ -22,31 +18,31 @@ public class PrivacyStatus : NetworkBehaviour
 
     void PrivacyButton()
     {
-        if (!_lobbyPlayerData.IsHost) return;
+        if (!LobbyPlayerData.Instance.IsHost) return;
         TogglePrivacy();
     }
 
     [ServerRpc]
     void TogglePrivacy()
     {
-        if (!_lobbyData.IsPublic)
+        if (!LobbyData.Instance.IsPublic)
         {
-            SteamMatchmaking.SetLobbyType(_lobbyData.LobbyID, ELobbyType.k_ELobbyTypePublic);
-            _lobbyData.IsPublic = true;
+            SteamMatchmaking.SetLobbyType(LobbyData.Instance.LobbyID, ELobbyType.k_ELobbyTypePublic);
+            LobbyData.Instance.IsPublic = true;
             SyncPrivacy(true);
             return;
         }
 
-        SteamMatchmaking.SetLobbyType(_lobbyData.LobbyID, ELobbyType.k_ELobbyTypePrivate);
-        _lobbyData.IsPublic = false;
+        SteamMatchmaking.SetLobbyType(LobbyData.Instance.LobbyID, ELobbyType.k_ELobbyTypePrivate);
+        LobbyData.Instance.IsPublic = false;
         SyncPrivacy(false);
     }
 
     [ObserversRpc]
     void SyncPrivacy(bool isPublic)
     {
-        _lobbyData.IsPublic = isPublic;
-        _mainMenuObjects.privacyButtonText.text = _lobbyData.IsPublic ? "Public" : "Private";
+        LobbyData.Instance.IsPublic = isPublic;
+        MainMenuObjects.Instance.joinInputField.text = LobbyData.Instance.IsPublic ? "Public" : "Private";
     }
 
 }
