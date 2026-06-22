@@ -81,9 +81,9 @@ public class SteamLobbyManager : MonoBehaviour
         }
         fishNetNetworkManager.ClientManager.StopConnection();
         LobbyPlayerData.IsHost = false;
-        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu);
+        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu, false);
     }
-    
+
     void OnJoinRequested(GameLobbyJoinRequested_t result)
     {
         LobbyPlayerData.IsHost = false;
@@ -115,16 +115,27 @@ public class SteamLobbyManager : MonoBehaviour
     {
         if (LobbyPlayerData.IsHost)
         {
-            MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu);
+            LobbyPlayerData.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.LobbyID);
+            LobbyPlayerData.PlayerSteamID = LobbyPlayerData.HostSteamID;
+            LobbyPlayerData.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.HostSteamID);
+            LobbyData.IsPublic = false;
+            
+            MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu, true);
+            LobbyPlayerCard.Instance.SetupPlayerCard();
+            
             Debug.Log("Entered your own lobby.");
             return;
         }
         
         LobbyPlayerData.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.LobbyID); 
+        LobbyPlayerData.PlayerSteamID = SteamUser.GetSteamID();
+        LobbyPlayerData.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.PlayerSteamID);
+        
         SetFishySteamworksTargetId(LobbyPlayerData.HostSteamID.m_SteamID.ToString());
         fishNetNetworkManager.ClientManager.StartConnection();
         
-        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.Lobby);
+        MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.Lobby, false);
+        LobbyPlayerCard.Instance.SetupPlayerCard();
         Debug.Log($"Player joined Host: {LobbyPlayerData.HostSteamID}, Lobby: {LobbyData.LobbyID}");
     }
     

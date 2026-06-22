@@ -827,7 +827,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &458295395
 RectTransform:
   m_ObjectHideFlags: 0
@@ -2084,20 +2084,21 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e4e23f3ed887cd94cb180631fd8bf7d2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuManager
-  serverListButton: {fileID: 559712061}
-  hostLobbyButton: {fileID: 1476030066}
-  joinLobbyButton: {fileID: 1712678221}
-  quitButton: {fileID: 945669534}
-  privacyButton: {fileID: 0}
-  exitLobbyButton: {fileID: 0}
-  backButton: {fileID: 0}
-  readyUpButton: {fileID: 0}
-  startGameButton: {fileID: 0}
-  mainMenuPanel: {fileID: 1202888890}
-  lobbyPanel: {fileID: 458295394}
-  serverListPanel: {fileID: 797941329}
-  joinInputField: {fileID: 1017214647}
-  isReady: 0
+  menu:
+    serverListButton: {fileID: 0}
+    hostLobbyButton: {fileID: 0}
+    joinLobbyButton: {fileID: 0}
+    quitButton: {fileID: 0}
+    privacyButton: {fileID: 0}
+    exitLobbyButton: {fileID: 0}
+    backButton: {fileID: 0}
+    readyUpButton: {fileID: 0}
+    startGameButton: {fileID: 0}
+    mainMenuPanel: {fileID: 0}
+    lobbyPanel: {fileID: 0}
+    serverListPanel: {fileID: 0}
+    joinInputField: {fileID: 0}
+    privacyButtonText: {fileID: 0}
 --- !u!1 &971469460
 GameObject:
   m_ObjectHideFlags: 0
@@ -2549,7 +2550,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &1202888891
 RectTransform:
   m_ObjectHideFlags: 0
@@ -4017,10 +4018,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a895ed8984997a84e9aff8da168e1ba6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::SteamLobbyManager
-  currentLobbyID:
-    m_SteamID: 0
-  isHost: 0
-  isPublic: 0
+  fishNetNetworkManager: {fileID: 0}
 --- !u!114 &1909306432
 MonoBehaviour:
   m_ObjectHideFlags: 0

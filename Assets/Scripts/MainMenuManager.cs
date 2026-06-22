@@ -11,6 +11,8 @@ public class MainMenuManager : MonoBehaviour
     public static Action OnHostLobbyRequested;
     public static Action<string> OnJoinLobbyRequested;
     public static Action OnExitLobbyRequested;
+    public static Action OnStartGameRequested;
+    public static Action OnPrivacyButtonRequested;
     
     public enum MenuState
     {
@@ -51,14 +53,18 @@ public class MainMenuManager : MonoBehaviour
             (menu.privacyButton, OnPrivacyButtonClick),
             (menu.backButton, OnBackButtonClick),
             (menu.startGameButton, OnStartGameButtonClick),
-            (menu.readyUpButton, OnReadyUpButtonClick)
         };
     }
 
-    public void ShowCurrentPanel(MenuState state)
+    public void ShowCurrentPanel(MenuState state, bool isHost)
     {
         foreach (var kvp in _panelsAndState)
         {
+            if (!isHost && state == MenuState.Lobby)
+            {
+                menu.startGameButton.interactable = false;
+            }
+            
             kvp.Value.SetActive(kvp.Key == state);
         }
     }
@@ -81,18 +87,18 @@ public class MainMenuManager : MonoBehaviour
     
     void OnServerListButtonClick()
     {
-        ShowCurrentPanel(MenuState.ServerList);
+        ShowCurrentPanel(MenuState.ServerList, false);
     }
 
     void OnHostLobbyButtonClick()
     {
-        ShowCurrentPanel(MenuState.Lobby);
+        ShowCurrentPanel(MenuState.Lobby, true);
         OnHostLobbyRequested?.Invoke();
     }
 
     void OnJoinLobbyButtonClick()
     {
-        ShowCurrentPanel(MenuState.Lobby);
+        ShowCurrentPanel(MenuState.Lobby, false);
         if (menu.joinInputField != null && !string.IsNullOrEmpty(menu.joinInputField.text))
         {
             OnJoinLobbyRequested?.Invoke(menu.joinInputField.text);    
@@ -107,20 +113,24 @@ public class MainMenuManager : MonoBehaviour
 
     void OnExitLobbyButtonClick()
     {
-        ShowCurrentPanel(MenuState.MainMenu);
+        ShowCurrentPanel(MenuState.MainMenu, false);
         OnExitLobbyRequested?.Invoke();
     }
     
     void OnBackButtonClick()
     {
-        ShowCurrentPanel(MenuState.MainMenu);
+        ShowCurrentPanel(MenuState.MainMenu, false);
     }
 
-    void OnPrivacyButtonClick() { }
-    
-    void OnStartGameButtonClick() { }
+    void OnPrivacyButtonClick()
+    {
+        OnPrivacyButtonRequested?.Invoke();
+    }
 
-    void OnReadyUpButtonClick() { }
+    void OnStartGameButtonClick()
+    {
+        OnStartGameRequested?.Invoke();
+    }
 
     void Quit()
     {

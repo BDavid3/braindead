@@ -24,7 +24,10 @@ public class MainMenuObjects
     
     [Header("InputFields")]
     public InputField joinInputField;
-    
+
     [Header("Texts")]
-    public TMP_Text readyUpButtonText;
+    public TMP_Text privacyButtonText;
+
+    [Header("Lobby Players Place")] 
+    public GameObject lobbyPlayerPlace;
 }
