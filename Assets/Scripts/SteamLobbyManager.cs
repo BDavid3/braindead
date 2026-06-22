@@ -115,11 +115,11 @@ public class SteamLobbyManager : MonoBehaviour
         {
             LobbyPlayerData.Instance.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID);
             LobbyPlayerData.Instance.PlayerSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID);
-            LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.HostSteamID);
+            LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetPersonaName();
             LobbyData.Instance.IsPublic = false;
             
             MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.MainMenu, true);
-            LobbyPlayerCard.Instance.SetupPlayerCard();
+            AddPlayerCard.Instance.AddPlayerCardMethod(LobbyPlayerData.Instance.PlayerNickName);
             
             Debug.Log("Entered your own lobby.");
             return;
@@ -127,13 +127,13 @@ public class SteamLobbyManager : MonoBehaviour
         
         LobbyPlayerData.Instance.HostSteamID = SteamMatchmaking.GetLobbyOwner(LobbyData.Instance.LobbyID); 
         LobbyPlayerData.Instance.PlayerSteamID = SteamUser.GetSteamID();
-        LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetFriendPersonaName(LobbyPlayerData.Instance.PlayerSteamID);
+        LobbyPlayerData.Instance.PlayerNickName = SteamFriends.GetPersonaName();
         
         SetFishySteamworksTargetId(LobbyPlayerData.Instance.HostSteamID.m_SteamID.ToString());
         fishNetNetworkManager.ClientManager.StartConnection();
         
         MainMenuManager.Instance.ShowCurrentPanel(MainMenuManager.MenuState.Lobby, false);
-        LobbyPlayerCard.Instance.SetupPlayerCard();
+        AddPlayerCard.Instance.AddPlayerCardMethod(LobbyPlayerData.Instance.PlayerNickName);
         Debug.Log($"Player joined Host: {LobbyPlayerData.Instance.HostSteamID}, Lobby: {LobbyData.Instance.LobbyID}");
     }
         

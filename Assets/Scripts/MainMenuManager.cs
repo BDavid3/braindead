@@ -23,9 +23,7 @@ public class MainMenuManager : MonoBehaviour
 
     private Dictionary<MenuState, GameObject> _panelsAndState;
     private (Button button, UnityAction action)[] _buttonsWithActions;
-
-    [SerializeField] private MainMenuObjects menu;
-
+    
     private void Awake()
     {
         if (Instance != null && Instance != this)
@@ -37,22 +35,22 @@ public class MainMenuManager : MonoBehaviour
 
         _panelsAndState = new Dictionary<MenuState, GameObject>
         {
-            { MenuState.MainMenu, menu.mainMenuPanel },
-            { MenuState.ServerList, menu.serverListPanel },
-            { MenuState.Lobby, menu.lobbyPanel }
+            { MenuState.MainMenu, MainMenuObjects.Instance.mainMenuPanel },
+            { MenuState.ServerList,  MainMenuObjects.Instance.serverListPanel },
+            { MenuState.Lobby,  MainMenuObjects.Instance.lobbyPanel }
         };
 
         _buttonsWithActions = new (Button, UnityAction)[]
         {
-            (menu.serverListButton, OnServerListButtonClick),
-            (menu.hostLobbyButton, OnHostLobbyButtonClick),
-            (menu.joinLobbyButton, OnJoinLobbyButtonClick),
-            (menu.quitButton, OnQuitLobbyButtonClick),
+            ( MainMenuObjects.Instance.serverListButton, OnServerListButtonClick),
+            ( MainMenuObjects.Instance.hostLobbyButton, OnHostLobbyButtonClick),
+            ( MainMenuObjects.Instance.joinLobbyButton, OnJoinLobbyButtonClick),
+            ( MainMenuObjects.Instance.quitButton, OnQuitLobbyButtonClick),
 
-            (menu.exitLobbyButton, OnExitLobbyButtonClick),
-            (menu.privacyButton, OnPrivacyButtonClick),
-            (menu.backButton, OnBackButtonClick),
-            (menu.startGameButton, OnStartGameButtonClick),
+            ( MainMenuObjects.Instance.exitLobbyButton, OnExitLobbyButtonClick),
+            ( MainMenuObjects.Instance.privacyButton, OnPrivacyButtonClick),
+            ( MainMenuObjects.Instance.backButton, OnBackButtonClick),
+            ( MainMenuObjects.Instance.startGameButton, OnStartGameButtonClick),
         };
     }
 
@@ -62,7 +60,7 @@ public class MainMenuManager : MonoBehaviour
         {
             if (!isHost && state == MenuState.Lobby)
             {
-                menu.startGameButton.interactable = false;
+                MainMenuObjects.Instance.startGameButton.interactable = false;
             }
             
             kvp.Value.SetActive(kvp.Key == state);
@@ -99,13 +97,13 @@ public class MainMenuManager : MonoBehaviour
     void OnJoinLobbyButtonClick()
     {
         ShowCurrentPanel(MenuState.Lobby, false);
-        if (menu.joinInputField == null || string.IsNullOrEmpty(menu.joinInputField.text))
+        if ( MainMenuObjects.Instance.joinInputField == null || string.IsNullOrEmpty( MainMenuObjects.Instance.joinInputField.text))
         {
             Debug.LogError("Input field empty!");
             return;
         }
         ShowCurrentPanel(MenuState.Lobby, true);
-        OnJoinLobbyRequested?.Invoke(menu.joinInputField.text);   
+        OnJoinLobbyRequested?.Invoke( MainMenuObjects.Instance.joinInputField.text);   
     }
 
     void OnQuitLobbyButtonClick()

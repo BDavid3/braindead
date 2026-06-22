@@ -1,1 +1,1 @@
-// Lobby
+//Buggs: Onhostclick, can join without code, ready up change text, privacy button not working properly
