@@ -8,15 +8,17 @@ namespace UseScripts
         public static LobbyData Instance { get; private set; } =  new LobbyData();
     
         public CSteamID CurrentLobbyID { get; set; }
+        public string CurrentLobbyIDInString { get; set; }
         public CSteamID HostID { get; set; }
         public bool CurrentLobbyIsPublic { get; set; }
         public int MaxPlayerCount { get; set; }
 
         private LobbyData() { }
 
-        public void InitializeLobbyData(CSteamID lobbyID,  CSteamID hostID, bool isPublic, int maxPlayerCount)
+        public void InitializeLobbyData(CSteamID lobbyID,string lobbyIDInString,  CSteamID hostID, bool isPublic, int maxPlayerCount)
         {
             CurrentLobbyID = lobbyID;
+            CurrentLobbyIDInString = lobbyIDInString;
             HostID = hostID;
             CurrentLobbyIsPublic = isPublic;
             MaxPlayerCount = maxPlayerCount;

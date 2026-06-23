@@ -23,6 +23,7 @@ namespace UseScripts
         public static Action OnStartGameRequested;
         public static Action OnPrivacyButtonRequested;
         public static Action OnReadyUpButtonRequested;
+        public static Action OnCopyButtonRequested;
 
         [SerializeField] private Panels panels;
         [SerializeField] private MainMenuUIObjects mainMenuUIObjects;
@@ -69,6 +70,7 @@ namespace UseScripts
             lobbyUIObjects.readyUpButton.onClick.AddListener(OnReadyUpButtonClick);
             lobbyUIObjects.setPrivacyButton.onClick.AddListener(OnPrivacyButtonClick);
             lobbyUIObjects.startGameButton.onClick.AddListener(OnStartGameButtonClick);
+            lobbyUIObjects.copyCodeButton.onClick.AddListener(() => GUIUtility.systemCopyBuffer = LobbyData.Instance.CurrentLobbyIDInString);
         }
 
         void OnDisable()
@@ -85,6 +87,7 @@ namespace UseScripts
             lobbyUIObjects.readyUpButton.onClick.RemoveAllListeners();
             lobbyUIObjects.setPrivacyButton.onClick.RemoveAllListeners();
             lobbyUIObjects.startGameButton.onClick.RemoveAllListeners();
+            lobbyUIObjects.copyCodeButton.onClick.RemoveAllListeners();
         }
 
         public void SwitchState(MenuState whichState)

@@ -22,19 +22,22 @@ namespace UseScripts
             TogglePrivacy();
         }
 
-        [ServerRpc]
+        [ServerRpc(RequireOwnership =  false)]
         void TogglePrivacy()
         {
             if (!LobbyData.Instance.CurrentLobbyIsPublic)
             {
                 SteamMatchmaking.SetLobbyType(LobbyData.Instance.CurrentLobbyID, ELobbyType.k_ELobbyTypePublic);
                 LobbyData.Instance.CurrentLobbyIsPublic = true;
+                
+                Debug.Log(LobbyData.Instance.CurrentLobbyIsPublic);
                 SyncPrivacy(true);
                 return;
             }
 
             SteamMatchmaking.SetLobbyType(LobbyData.Instance.CurrentLobbyID, ELobbyType.k_ELobbyTypePrivate);
             LobbyData.Instance.CurrentLobbyIsPublic = false;
+            Debug.Log(LobbyData.Instance.CurrentLobbyIsPublic);
             SyncPrivacy(false);
         }
 

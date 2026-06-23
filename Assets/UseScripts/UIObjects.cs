@@ -38,8 +38,10 @@ namespace UseScripts
         public Button setPrivacyButton;
         public Button readyUpButton;
         public Button startGameButton;
+        public Button copyCodeButton;
         public GameObject playerPlace;
         public TMP_Text privacyText;
         public TMP_Text readyUpText;
+        public TMP_Text lobbyCode;
     }
 }
