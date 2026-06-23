@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 public class AddPlayerCard : MonoBehaviour
@@ -15,7 +14,6 @@ public class AddPlayerCard : MonoBehaviour
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
     }
 
