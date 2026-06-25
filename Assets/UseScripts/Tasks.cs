@@ -1,1 +1,0 @@
-// Restart Ui when leave, people already in lobby is not synced to newly come player, change the player placed style inside container
